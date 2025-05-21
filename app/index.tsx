@@ -8,20 +8,15 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
-  const [time, setTime] = useState(new Date(2025, 5, 14, 0, 0, 0))
+  const [time, setTime] = useState(zeroHour())
   const [timer, setTimer] = useState(false)
 
+  // Start the timer if the play button is pressed
   useEffect(() => {
     if (!timer) return
 
     const intervalo = setInterval(() => {
       setTime(prev => {
-
-        if (prev.getHours() <= 0 && prev.getMinutes() <= 0 && prev.getSeconds() <= 0) {
-          setTimer(false)
-          return new Date(2025, 5, 14, 0, 0, 0)
-        }
-
         const newTime = new Date(prev)
         newTime.setSeconds(newTime.getSeconds() - 1)
         return newTime
@@ -34,18 +29,32 @@ export default function Index() {
     }
   }, [timer])
 
+
+  // Check if the time is 00:00:00
+  useEffect(() => {
+    if ((isZeroHour(time)) || time.getHours() >= 23) {
+      setTimer(false)
+      setTime(zeroHour())
+    }
+
+  }, [time.getSeconds()])
+
+
   return (
     <SafeAreaView style={[styles.container]}>
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <View style={{flexDirection: 'row', alignItems: 'center'}}>
-        <Text style={styles.fontStyle}>{time.toLocaleTimeString()}</Text>
-        <Ionicons name="stopwatch-sharp" color={'black'} size={90} />
-          </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={styles.fontStyle}>{time.toLocaleTimeString()}</Text>
+          <Ionicons name="stopwatch-sharp" color={'black'} size={90} />
+        </View>
         <View style={[{ gap: 4, flexDirection: "row" }]}>
           <MinusButton onPress={() => setTime(changeTimerSeconds(time, false))} />
           <PlayStopButton isDisable={timer} onPress={() => {
-            if (!timer) setTimer(true)
-            else setTimer(false)
+            if (isZeroHour(time)) return
+            if (!timer)
+              setTimer(true)
+            else
+              setTimer(false)
           }} />
           <PlusButton onPress={() => setTime(changeTimerSeconds(time, true))} />
         </View>
@@ -65,12 +74,22 @@ function changeTimerSeconds(pt: Date, increaseTime: boolean) {
   if (increaseTime) {
     newTime.setSeconds(newTime.getSeconds() + 10)
   } else {
-    if (pt.getHours() <= 0 && pt.getMinutes() <= 0 && pt.getSeconds() <= 0)
-      return new Date(2025, 5, 14, 0, 0, 0)
     newTime.setSeconds(newTime.getSeconds() - 10)
+    
+    if ((isZeroHour(newTime)) || newTime.getHours() >= 23)
+      return zeroHour()
   }
 
   return newTime
+}
+
+
+function isZeroHour(time: Date) {
+  return time.getHours() <= 0 && time.getMinutes() <= 0 && time.getSeconds() <= 0
+}
+
+function zeroHour() {
+  return new Date(2025, 5, 14, 0, 0, 0)
 }
 
 const styles = StyleSheet.create({
